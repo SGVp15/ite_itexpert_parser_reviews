@@ -51,16 +51,16 @@ def save_combined_excel(all_participants_data: List[Dict[str, Any]], output_file
     try:
         # Сохранение в Excel (.xlsx)
         df.to_excel(output_filepath, index=False, engine='openpyxl')
-        print(f"\n✨ ОБЪЕДИНЕННЫЙ ОТЧЕТ УСПЕШНО СОХРАНЕН:")
+        print(f"\nОБЪЕДИНЕННЫЙ ОТЧЕТ УСПЕШНО СОХРАНЕН:")
         print(f"Файл: {output_filepath.name}")
-        print(f"Всего записей: {len(df)}")
-        print(f"Путь: {output_filepath.resolve()}")
+        print(f"Всего записей: {len(df)}\n")
+        print(f"🆗 Сохранено в XLSX: {output_filepath.resolve()}")
     except Exception as e:
         print(f"\n❌ ФАТАЛЬНАЯ ОШИБКА при сохранении объединенного Excel-файла: {e}")
     finally:
         csv_filepath = output_filepath.with_suffix('.csv')
         df.to_csv(csv_filepath, index=False, encoding='utf-8')
-        print(f"    ℹ️ Сохранено в резервный CSV: {csv_filepath.name}")
+        print(f"🆗 Сохранено в CSV: {csv_filepath.resolve()}")
 
 
 def process_html_file(filename_path: pathlib.Path) -> List[Dict[str, Any]]:
