@@ -14,12 +14,10 @@ def clean_test_infp(data: Dict[str, Any]) -> Dict[str, Any]:
     """
     cleaned_data = {}
 
-    # Сначала очистка на основе переданных данных
     for key, value in data.items():
         if isinstance(value, str):
             cleaned_value = re.sub(r'\s+', ' ', value).strip()
 
-            # Специальная обработка для "Оценка"
             if key == 'Оценка' and re.search(r'\d+,\d+', cleaned_value):
                 cleaned_value = re.sub(r'[,\/].*$', '', cleaned_value).strip()
 
@@ -27,33 +25,52 @@ def clean_test_infp(data: Dict[str, Any]) -> Dict[str, Any]:
         else:
             cleaned_data[key] = value
 
-    # Дополнительная очистка, если словарь был изменен в процессе
-    # (Хотя 'cleaned_data' уже содержит все очищенные данные,
-    # эта секция может быть удалена, так как дублирует логику выше.)
-    for key in list(cleaned_data.keys()):
-        if isinstance(cleaned_data[key], str):
-            cleaned_data[key] = re.sub(r'\s+', ' ', cleaned_data[key]).strip()
-
     return cleaned_data
 
 
 def save_combined_excel(all_participants_data: List[Dict[str, Any]], output_filepath: pathlib.Path):
     """
-    Сохраняет все собранные данные участников в один Excel-файл.
+    Сохраняет все собранные данные участников в один Excel-файл с фильтрацией.
     """
     if not all_participants_data:
         print("Нечего сохранять: Список объединенных данных пуст.")
         return
 
-    # 1. Создание общего DataFrame из списка всех словарей
+    # 1. Создание общего DataFrame
     df = pd.DataFrame(all_participants_data)
+
+    # --- ДОБАВЛЕННЫЙ ФИЛЬТР ---
+    column_to_filter = 'Разрешение на публикацию'
+
+    if column_to_filter in df.columns:
+        # Приводим к строке на случай, если там числа, и фильтруем по значению '1'
+        df = df[df[column_to_filter].astype(str) == '1']
+        print(f"Применен фильтр: {column_to_filter} == '1'")
+    else:
+        print(f"⚠️ Предупреждение: Колонка '{column_to_filter}' не найдена. Фильтрация не применена.")
+    # ---------------------------
+
+    # existing_cols = [c for c in cols_to_check if c in df.columns]
+    col_quality = 'Качество курса комментарий'
+    col_teacher = 'Работа преподавателя комментарий'
+    # if len(existing_cols) == 2:
+        # Убираем строки, где в ОБЕИХ колонках либо NaN, либо пустая строка после обрезки пробелов
+    df = df[~(
+            (df[col_teacher].isna() | (df[col_teacher].astype(str).str.strip() == '')) &
+            (df[col_quality].isna() | (df[col_quality].astype(str).str.strip() == ''))
+    )]
+    print(f"Исключены записи, где оба комментария ('{col_teacher}' и '{col_quality}') отсутствуют.")
+
+    if df.empty:
+        print("После фильтрации данных не осталось. Файл не будет сохранен.")
+        return
 
     try:
         # Сохранение в Excel (.xlsx)
         df.to_excel(output_filepath, index=False, engine='openpyxl')
         print(f"\nОБЪЕДИНЕННЫЙ ОТЧЕТ УСПЕШНО СОХРАНЕН:")
         print(f"Файл: {output_filepath.name}")
-        print(f"Всего записей: {len(df)}\n")
+        print(f"Всего записей после фильтрации: {len(df)}\n")
         print(f"🆗 Сохранено в XLSX: {output_filepath.resolve()}")
     except Exception as e:
         print(f"\n❌ ФАТАЛЬНАЯ ОШИБКА при сохранении объединенного Excel-файла: {e}")
@@ -65,12 +82,9 @@ def save_combined_excel(all_participants_data: List[Dict[str, Any]], output_file
 
 def process_html_file(filename_path: pathlib.Path) -> List[Dict[str, Any]]:
     """
-    Обрабатывает один HTML-файл, извлекает данные и возвращает список
-    словарей, где каждый словарь - это строка участника с добавленной
-    информацией о курсе.
+    Обрабатывает один HTML-файл и возвращает список словарей.
     """
     print(f"    -> Парсинг: {filename_path.name}")
-    # parse_all_review_html теперь возвращает список блоков
     raw_blocks = parse_all_review_html(filename=filename_path)
 
     combined_data_list = []
@@ -86,10 +100,8 @@ def process_html_file(filename_path: pathlib.Path) -> List[Dict[str, Any]]:
         if not participants_data:
             continue
 
-        # 1. Очистка данных курса
         cleaned_course_info = clean_test_infp(course_info)
 
-        # 2. Объединение данных курса с данными участников
         for participant in participants_data:
             row = cleaned_course_info.copy()
             row.update(participant)
@@ -102,7 +114,6 @@ if __name__ == '__main__':
     dir_path.mkdir(parents=True, exist_ok=True)
     dir_report_path.mkdir(parents=True, exist_ok=True)
 
-    # 2. Сбор всех файлов для обработки
     all_html_files = list(dir_path.glob('*.html'))
 
     print("-" * 30)
@@ -110,7 +121,6 @@ if __name__ == '__main__':
     print(f"Итоговый отчет будет сохранен в: {FINAL_REPORT_NAME}")
     print("-" * 30)
 
-    # 3. Основной цикл: сбор всех данных в один список
     all_combined_data = []
     final_report_filepath = dir_report_path / FINAL_REPORT_NAME
 
@@ -118,7 +128,6 @@ if __name__ == '__main__':
         file_data = process_html_file(filename_path)
         all_combined_data.extend(file_data)
 
-    # 4. Сохранение объединенного отчета
     print("-" * 30)
     if all_combined_data:
         save_combined_excel(all_combined_data, final_report_filepath)
