@@ -39,7 +39,6 @@ def save_combined_excel(all_participants_data: List[Dict[str, Any]], output_file
     # 1. Создание общего DataFrame
     df = pd.DataFrame(all_participants_data)
 
-    # --- ДОБАВЛЕННЫЙ ФИЛЬТР ---
     column_to_filter = 'Разрешение на публикацию'
 
     if column_to_filter in df.columns:
@@ -48,13 +47,9 @@ def save_combined_excel(all_participants_data: List[Dict[str, Any]], output_file
         print(f"Применен фильтр: {column_to_filter} == '1'")
     else:
         print(f"⚠️ Предупреждение: Колонка '{column_to_filter}' не найдена. Фильтрация не применена.")
-    # ---------------------------
 
-    # existing_cols = [c for c in cols_to_check if c in df.columns]
     col_quality = 'Качество курса комментарий'
     col_teacher = 'Работа преподавателя комментарий'
-    # if len(existing_cols) == 2:
-        # Убираем строки, где в ОБЕИХ колонках либо NaN, либо пустая строка после обрезки пробелов
     df = df[~(
             (df[col_teacher].isna() | (df[col_teacher].astype(str).str.strip() == '')) &
             (df[col_quality].isna() | (df[col_quality].astype(str).str.strip() == ''))
