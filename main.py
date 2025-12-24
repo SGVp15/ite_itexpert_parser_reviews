@@ -4,7 +4,7 @@ from typing import List, Dict, Any
 
 import pandas as pd
 
-from config import dir_path, dir_report_path, FINAL_REPORT_NAME
+from root_config import DIR_PATH, DIR_REPORT_PATH, FINAL_REPORT_NAME
 from parser import parse_all_review_html
 
 
@@ -19,7 +19,7 @@ def clean_test_infp(data: Dict[str, Any]) -> Dict[str, Any]:
             cleaned_value = re.sub(r'\s+', ' ', value).strip()
 
             if key == 'Оценка' and re.search(r'\d+,\d+', cleaned_value):
-                cleaned_value = re.sub(r'[,\/].*$', '', cleaned_value).strip()
+                cleaned_value = re.sub(r'[,/].*$', '', cleaned_value).strip()
 
             cleaned_data[key] = cleaned_value
         else:
@@ -106,10 +106,7 @@ def process_html_file(filename_path: pathlib.Path) -> List[Dict[str, Any]]:
 
 
 if __name__ == '__main__':
-    dir_path.mkdir(parents=True, exist_ok=True)
-    dir_report_path.mkdir(parents=True, exist_ok=True)
-
-    all_html_files = list(dir_path.glob('*.html'))
+    all_html_files = list(DIR_PATH.glob('*.html'))
 
     print("-" * 30)
     print(f"Найдено HTML файлов: {len(all_html_files)}")
@@ -117,7 +114,7 @@ if __name__ == '__main__':
     print("-" * 30)
 
     all_combined_data = []
-    final_report_filepath = dir_report_path / FINAL_REPORT_NAME
+    final_report_filepath = DIR_REPORT_PATH / FINAL_REPORT_NAME
 
     for filename_path in all_html_files:
         file_data = process_html_file(filename_path)

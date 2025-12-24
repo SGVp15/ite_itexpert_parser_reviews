@@ -12,7 +12,8 @@ def parse_all_review_html(filename: pathlib.Path) -> List[Dict[str, Any]]:
     all_parsed_reviews = []
 
     try:
-        with open(filename, 'r', encoding='utf-8') as f:
+        # with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(filename, 'r', encoding='windows-1251', errors='ignore') as f:
             html_content = f.read()
 
         soup = BeautifulSoup(html_content, 'html.parser')
