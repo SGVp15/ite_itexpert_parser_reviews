@@ -9,7 +9,7 @@ FILE_TEMP_CSV = DIR_REPORT_PATH / 'TEMP.csv'
 FILE_ALL_REPORT = DIR_REPORT_PATH / 'ALL_REPORTS.csv'
 FILE_REPORT_SEND_EMAIL = DIR_REPORT_PATH / 'FILE_REPORT_SEND_EMAIL.xlsx'
 
-LIST_EMAIL = ['sale@itexpert.ru',]
+LIST_EMAIL = ['sale@itexpert.ru', 'itstrain@itexpert.ru']
 try:
     FILE_REPORT_SEND_EMAIL.unlink()
 except FileNotFoundError:
