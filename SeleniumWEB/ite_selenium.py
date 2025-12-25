@@ -10,6 +10,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from SeleniumWEB.config import LOGIN_ITE as LOGIN, PASSWORD_ITE as PASSWORD, ITEXPERT_URL
 from Utils.chromedriver_autoupdate import ChromedriverAutoupdate
+from Utils.log import log
 
 
 class IteSelenium:
@@ -68,8 +69,12 @@ class IteSelenium:
                 time.sleep(0.5)
 
     def get_page_source(self):
-        self.driver.get(f'{self.base_url}/cabinet/adminka.php')
-        return self.driver.page_source
+        try:
+            self.driver.get(f'{self.base_url}/cabinet/adminka.php')
+            return self.driver.page_source
+        except Exception as e:
+            log.error(e)
+            return ''
 
     def quit(self):
         self.driver.quit()

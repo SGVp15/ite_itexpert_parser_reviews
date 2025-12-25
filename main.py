@@ -1,3 +1,4 @@
+import datetime
 import re
 from pathlib import Path
 from typing import List, Dict, Any
@@ -6,6 +7,7 @@ import pandas as pd
 
 from Email import EmailSending
 from SeleniumWEB.ite_selenium import IteSelenium
+from Utils.log import log
 from parser import parse_all_review_html
 from root_config import FILE_DOWNLOAD_HTML, FILE_REPORT_SEND_EMAIL, FILE_ALL_REPORT, FILE_TEMP_CSV, LIST_EMAIL
 
@@ -117,6 +119,7 @@ def download_html_file():
 
 
 if __name__ == '__main__':
+    log.info(f'[ Start ] {datetime.datetime.now()}')
     download_html_file()
     all_combined_data = process_html_file(FILE_DOWNLOAD_HTML)
     if all_combined_data:
