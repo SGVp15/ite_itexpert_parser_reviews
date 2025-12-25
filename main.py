@@ -1,11 +1,13 @@
-import pathlib
 import re
+from pathlib import Path
 from typing import List, Dict, Any
 
 import pandas as pd
 
-from root_config import DIR_PATH, DIR_REPORT_PATH, FINAL_REPORT_NAME
+from Email import EmailSending
+from SeleniumWEB.ite_selenium import IteSelenium
 from parser import parse_all_review_html
+from root_config import FILE_DOWNLOAD_HTML, FILE_REPORT_SEND_EMAIL, FILE_ALL_REPORT, FILE_TEMP_CSV, LIST_EMAIL
 
 
 def clean_test_infp(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -28,13 +30,13 @@ def clean_test_infp(data: Dict[str, Any]) -> Dict[str, Any]:
     return cleaned_data
 
 
-def save_combined_excel(all_participants_data: List[Dict[str, Any]], output_filepath: pathlib.Path):
+def save_combined_excel(all_participants_data: List[Dict[str, Any]], output_filepath: Path):
     """
     Сохраняет все собранные данные участников в один Excel-файл с фильтрацией.
     """
-    if not all_participants_data:
-        print("Нечего сохранять: Список объединенных данных пуст.")
-        return
+    # if not all_participants_data:
+    #     print("Нечего сохранять: Список объединенных данных пуст.")
+    #     return
 
     # 1. Создание общего DataFrame
     df = pd.DataFrame(all_participants_data)
@@ -75,7 +77,7 @@ def save_combined_excel(all_participants_data: List[Dict[str, Any]], output_file
         print(f"🆗 Сохранено в CSV: {csv_filepath.resolve()}")
 
 
-def process_html_file(filename_path: pathlib.Path) -> List[Dict[str, Any]]:
+def process_html_file(filename_path: Path) -> List[Dict[str, Any]]:
     """
     Обрабатывает один HTML-файл и возвращает список словарей.
     """
@@ -105,25 +107,40 @@ def process_html_file(filename_path: pathlib.Path) -> List[Dict[str, Any]]:
     return combined_data_list
 
 
+def download_html_file():
+    html_file = FILE_DOWNLOAD_HTML
+    web_driver = IteSelenium()
+    web_driver.authorization()
+    s = web_driver.get_page_source()
+    with open(html_file, mode='w', encoding='windows-1251', errors='ignore') as f:
+        f.write(s)
+
+
 if __name__ == '__main__':
-    all_html_files = list(DIR_PATH.glob('*.html'))
-
-    print("-" * 30)
-    print(f"Найдено HTML файлов: {len(all_html_files)}")
-    print(f"Итоговый отчет будет сохранен в: {FINAL_REPORT_NAME}")
-    print("-" * 30)
-
-    all_combined_data = []
-    final_report_filepath = DIR_REPORT_PATH / FINAL_REPORT_NAME
-
-    for filename_path in all_html_files:
-        file_data = process_html_file(filename_path)
-        all_combined_data.extend(file_data)
-
-    print("-" * 30)
+    download_html_file()
+    all_combined_data = process_html_file(FILE_DOWNLOAD_HTML)
     if all_combined_data:
-        save_combined_excel(all_combined_data, final_report_filepath)
+        save_combined_excel(all_participants_data=all_combined_data,
+                            output_filepath=FILE_TEMP_CSV)
     else:
         print("Обработка завершена, но данные для сохранения отсутствуют.")
 
+    # Оставляем только новые отзывы
+    print('Оставляем только новые отзывы')
+    df1 = pd.read_csv(FILE_TEMP_CSV)
+    try:
+        df2 = pd.read_csv(FILE_ALL_REPORT)
+        df_diff = df1.merge(df2, how='left', indicator=True)
+        result = df_diff[df_diff['_merge'] == 'left_only'].drop('_merge', axis=1)
+        all_report = df1 + df2
+    except Exception as e:
+        result = df1
+        all_report = df1
     print("-" * 30)
+    save_combined_excel(all_participants_data=result,
+                        output_filepath=FILE_REPORT_SEND_EMAIL)
+    save_combined_excel(all_participants_data=all_report,
+                        output_filepath=FILE_ALL_REPORT)
+    if FILE_REPORT_SEND_EMAIL.is_file():
+        EmailSending(subject='Новый отзыв на сайте.', to=LIST_EMAIL,
+                     files_path=[FILE_REPORT_SEND_EMAIL, ]).send_email()

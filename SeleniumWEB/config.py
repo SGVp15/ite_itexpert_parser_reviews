@@ -4,8 +4,8 @@ from dotenv import dotenv_values, find_dotenv
 
 config = dotenv_values(find_dotenv())
 
-LOGIN_ITE = config.get('LOGIN_MOODLE')
-PASSWORD_ITE = config.get('PASSWORD_MOODLE')
+LOGIN_ITE = config.get('LOGIN_ITE')
+PASSWORD_ITE = config.get('PASSWORD_ITE')
 ITEXPERT_URL = config.get('ITEXPERT_URL')
 
 DIR_HTML_DOWNLOAD = Path('./data', 'input')
