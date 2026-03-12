@@ -38,31 +38,24 @@ def save_combined_excel(all_participants_data: List[Dict[str, Any]], output_file
     """
     # if not all_participants_data:
     #     print("Нечего сохранять: Список объединенных данных пуст.")
-    #     return
+    #     return False
 
     # 1. Создание общего DataFrame
     df = pd.DataFrame(all_participants_data)
 
-    column_to_filter = 'Разрешение на публикацию'
-
-    if column_to_filter in df.columns:
-        # Приводим к строке на случай, если там числа, и фильтруем по значению '1'
-        df = df[df[column_to_filter].astype(str) == '1']
-        print(f"Применен фильтр: {column_to_filter} == '1'")
-    else:
-        print(f"⚠️ Предупреждение: Колонка '{column_to_filter}' не найдена. Фильтрация не применена.")
-
     col_quality = 'Качество курса комментарий'
     col_teacher = 'Работа преподавателя комментарий'
     df = df[~(
-            (df[col_teacher].isna() | (df[col_teacher].astype(str).str.strip() == '')) &
-            (df[col_quality].isna() | (df[col_quality].astype(str).str.strip() == ''))
+        (df[col_quality].isna() | (df[col_quality].astype(str).str.strip() == ''))
+    )]
+    df = df[~(
+        (df[col_teacher].isna() | (df[col_teacher].astype(str).str.strip() == ''))
     )]
     print(f"Исключены записи, где оба комментария ('{col_teacher}' и '{col_quality}') отсутствуют.")
 
     if df.empty:
         print("После фильтрации данных не осталось. Файл не будет сохранен.")
-        return
+        return False
 
     try:
         # Сохранение в Excel (.xlsx)
@@ -71,12 +64,13 @@ def save_combined_excel(all_participants_data: List[Dict[str, Any]], output_file
         print(f"Файл: {output_filepath.name}")
         print(f"Всего записей после фильтрации: {len(df)}\n")
         print(f"🆗 Сохранено в XLSX: {output_filepath.resolve()}")
-    except Exception as e:
-        print(f"\n❌ ФАТАЛЬНАЯ ОШИБКА при сохранении объединенного Excel-файла: {e}")
-    finally:
         csv_filepath = output_filepath.with_suffix('.csv')
         df.to_csv(csv_filepath, index=False, encoding='utf-8')
         print(f"🆗 Сохранено в CSV: {csv_filepath.resolve()}")
+        return True
+    except Exception as e:
+        print(f"\n❌ ФАТАЛЬНАЯ ОШИБКА при сохранении объединенного Excel-файла: {e}")
+        return False
 
 
 def process_html_file(filename_path: Path) -> List[Dict[str, Any]]:
@@ -118,15 +112,18 @@ def download_html_file():
         f.write(s)
 
 
-if __name__ == '__main__':
+def main():
     log.info(f'[ Start ] {datetime.datetime.now()}')
+
     download_html_file()
+
     all_combined_data = process_html_file(FILE_DOWNLOAD_HTML)
     if all_combined_data:
         save_combined_excel(all_participants_data=all_combined_data,
                             output_filepath=FILE_TEMP_CSV)
     else:
         print("Обработка завершена, но данные для сохранения отсутствуют.")
+        return
 
     # Оставляем только новые отзывы
     print('Оставляем только новые отзывы')
@@ -135,15 +132,22 @@ if __name__ == '__main__':
         df2 = pd.read_csv(FILE_ALL_REPORT)
         df_diff = df1.merge(df2, how='left', indicator=True)
         result = df_diff[df_diff['_merge'] == 'left_only'].drop('_merge', axis=1)
-        all_report = df1 + df2
+        all_report = pd.concat([df1, df2], ignore_index=True)
+        all_report.drop_duplicates(inplace=True)
     except Exception as e:
         result = df1
         all_report = df1
     print("-" * 30)
-    save_combined_excel(all_participants_data=result,
-                        output_filepath=FILE_REPORT_SEND_EMAIL)
+
+    have_new_report = save_combined_excel(all_participants_data=result,
+                            output_filepath=FILE_REPORT_SEND_EMAIL)
     save_combined_excel(all_participants_data=all_report,
                         output_filepath=FILE_ALL_REPORT)
-    if FILE_REPORT_SEND_EMAIL.is_file():
+
+    if have_new_report and FILE_REPORT_SEND_EMAIL.is_file():
         EmailSending(subject='Новый отзыв на сайте.', to=LIST_EMAIL,
                      files_path=[FILE_REPORT_SEND_EMAIL, ]).send_email()
+
+
+if __name__ == '__main__':
+    main()
