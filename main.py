@@ -114,7 +114,7 @@ def main():
 
     # 1. Загружаем справочник из 1С
     contacts_data = process_contacts_to_list()
-    df_1c = pd.DataFrame(contacts_data)
+    df_contacts_from_1c = pd.DataFrame(contacts_data)
 
     # 2. Парсим HTML
     all_combined_data = process_html_file(FILE_DOWNLOAD_HTML)
@@ -127,34 +127,49 @@ def main():
 
     # 3. Читаем временный CSV и сопоставляем с 1С
     print('Обогащение данных из 1С...')
-    df1 = pd.read_csv(FILE_TEMP_CSV)
+    df_new_records = pd.read_csv(FILE_TEMP_CSV)
+
+    column_permission = 'Разрешение на публикацию'
+    if column_permission in df_new_records.columns:
+        # Оставляем только те строки, где значение равно 1
+        # (используем pd.to_numeric на случай, если 1 записана как строка "1")
+        df_new_records = df_new_records[pd.to_numeric(df_new_records[column_permission], errors='coerce') == 1]
 
     # Предполагаемое имя колонки email в вашем HTML-парсере
     email_col_main = 'Пользователь'
 
-    if not df_1c.empty and email_col_main in df1.columns:
+    if not df_contacts_from_1c.empty and email_col_main in df_new_records.columns:
         # Приводим основной email к нижнему регистру для сравнения
-        df1[email_col_main] = df1[email_col_main].astype(str).str.strip().str.lower()
+        df_new_records[email_col_main] = df_new_records[email_col_main].astype(str).str.strip().str.lower()
 
-        # Merge (аналог ВПР)
-        df1 = df1.merge(df_1c, left_on=email_col_main, right_on='email_1c', how='left')
-        df1.drop(columns=['email_1c'], inplace=True, errors='ignore')
+        df_new_records = df_new_records.merge(df_contacts_from_1c, left_on=email_col_main, right_on='email_1c', how='left')
+        df_new_records.drop(columns=['email_1c'], inplace=True, errors='ignore')
 
     # 4. Сравнение с накопленным отчетом (выделение только новых)
     try:
-        df2 = pd.read_csv(FILE_ALL_REPORT)
-        # Приводим колонку для сравнения в df2 тоже к нижнему регистру на всякий случай
-        if email_col_main in df2.columns:
-            df2[email_col_main] = df2[email_col_main].astype(str).str.strip().str.lower()
+        df_all_report = pd.read_csv(FILE_ALL_REPORT)
 
-        df_diff = df1.merge(df2, how='left', indicator=True)
+        if email_col_main in df_all_report.columns:
+            df_all_report[email_col_main] = df_all_report[email_col_main].astype(str).str.strip().str.lower()
+
+        df_all_report = df_all_report.fillna('')
+        df_all_report.drop_duplicates()
+        df_new_records = df_new_records.fillna('')
+        df_new_records.drop_duplicates()
+
+        df_diff = df_new_records.merge(df_all_report, how='left', indicator=True)
         result_df = df_diff[df_diff['_merge'] == 'left_only'].drop('_merge', axis=1)
 
-        all_report_df = pd.concat([df1, df2], ignore_index=True).drop_duplicates()
+        all_report_df = pd.concat([df_new_records, df_all_report], ignore_index=True)
+
+        result_df = result_df.fillna('')
+        all_report_df = all_report_df.fillna('')
+        all_report_df.drop_duplicates()
+        result_df.drop_duplicates()
     except Exception:
         print("Создание нового файла истории.")
-        result_df = df1
-        all_report_df = df1
+        result_df = df_new_records
+        all_report_df = df_new_records
 
     # 5. Сохранение итогов
     have_new = save_combined_excel(result_df.to_dict('records'), FILE_REPORT_SEND_EMAIL)
@@ -180,5 +195,5 @@ def download_html_file():
 
 if __name__ == '__main__':
     log.info(f'[ Start ] {datetime.datetime.now()}')
-    download_html_file()
+    # download_html_file()
     main()

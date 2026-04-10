@@ -13,7 +13,7 @@ FILE_ALL_REPORT = DIR_REPORT_PATH / 'ALL_REPORTS.csv'
 FILE_REPORT_SEND_EMAIL = DIR_REPORT_PATH / f'{today}.xlsx'
 
 FILE_CONTACT_1C = "//192.168.20.3/c$/1C/Contacts.txt"
-# FILE_CONTACT_1C = "./data/Contacts.txt"
+FILE_CONTACT_1C = "./data/Contacts.txt"
 
 LIST_EMAIL = ['sale@itexpert.ru', 'itstrain@itexpert.ru', 'g.savushkin@itexpert.ru', ]
 LIST_EMAIL = ['g.savushkin@itexpert.ru', ]
