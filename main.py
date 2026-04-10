@@ -1,3 +1,5 @@
+# Импорты ваших локальных модулей
+# Если Contact находится в этом же файле, удалите строку ниже
 import datetime
 import re
 from pathlib import Path
@@ -5,8 +7,6 @@ from typing import List, Dict, Any
 
 import pandas as pd
 
-# Импорты ваших локальных модулей
-# Если Contact находится в этом же файле, удалите строку ниже
 from Contact import Contact
 from Email import EmailSending
 from SeleniumWEB.ite_selenium import IteSelenium
@@ -169,5 +169,16 @@ def main():
     log.info(f'[ End ] {datetime.datetime.now()}')
 
 
+def download_html_file():
+    html_file = FILE_DOWNLOAD_HTML
+    web_driver = IteSelenium()
+    web_driver.authorization()
+    s = web_driver.get_page_source()
+    with open(html_file, mode='w', encoding='windows-1251', errors='ignore') as f:
+        f.write(s)
+
+
 if __name__ == '__main__':
+    log.info(f'[ Start ] {datetime.datetime.now()}')
+    download_html_file()
     main()
