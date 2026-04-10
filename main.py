@@ -132,7 +132,6 @@ def main():
     column_permission = 'Разрешение на публикацию'
     if column_permission in df_new_records.columns:
         # Оставляем только те строки, где значение равно 1
-        # (используем pd.to_numeric на случай, если 1 записана как строка "1")
         df_new_records = df_new_records[pd.to_numeric(df_new_records[column_permission], errors='coerce') == 1]
 
     # Предполагаемое имя колонки email в вашем HTML-парсере
