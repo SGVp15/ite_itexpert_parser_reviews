@@ -195,5 +195,5 @@ def download_html_file():
 
 if __name__ == '__main__':
     log.info(f'[ Start ] {datetime.datetime.now()}')
-    # download_html_file()
+    download_html_file()
     main()
