@@ -197,6 +197,7 @@ if __name__ == '__main__':
     log.info(f'[ Start ] {datetime.datetime.now()}')
     try:
         # download_html_file()
+        pass
     except Exception as e:
         print(e)
     try:
