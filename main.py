@@ -141,7 +141,8 @@ def main():
         # Приводим основной email к нижнему регистру для сравнения
         df_new_records[email_col_main] = df_new_records[email_col_main].astype(str).str.strip().str.lower()
 
-        df_new_records = df_new_records.merge(df_contacts_from_1c, left_on=email_col_main, right_on='email_1c', how='left')
+        df_new_records = df_new_records.merge(df_contacts_from_1c, left_on=email_col_main, right_on='email_1c',
+                                              how='left')
         df_new_records.drop(columns=['email_1c'], inplace=True, errors='ignore')
 
     # 4. Сравнение с накопленным отчетом (выделение только новых)
@@ -194,5 +195,11 @@ def download_html_file():
 
 if __name__ == '__main__':
     log.info(f'[ Start ] {datetime.datetime.now()}')
-    download_html_file()
-    main()
+    try:
+        download_html_file()
+    except Exception as e:
+        print(e)
+    try:
+        main()
+    except Exception as e:
+        print(e)
