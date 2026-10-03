@@ -26,7 +26,7 @@ class IteSelenium:
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
         options.add_argument('--ignore-certificate-errors')
-        options.add_argument("--disable-notifications")
+        # options.add_argument("--disable-notifications")
 
         self.driver = webdriver.Chrome(options=options)
         self.web_error = (NoSuchElementException, ElementClickInterceptedException,

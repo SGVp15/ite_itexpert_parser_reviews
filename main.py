@@ -1,5 +1,3 @@
-# Импорты ваших локальных модулей
-# Если Contact находится в этом же файле, удалите строку ниже
 import datetime
 import re
 from pathlib import Path
@@ -196,10 +194,10 @@ def download_html_file():
 if __name__ == '__main__':
     log.info(f'[ Start ] {datetime.datetime.now()}')
     try:
-        # download_html_file()
-        pass
+        download_html_file()
     except Exception as e:
         print(e)
+
     try:
         main()
     except Exception as e:
