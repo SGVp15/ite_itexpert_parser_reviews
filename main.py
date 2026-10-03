@@ -1,5 +1,6 @@
 import datetime
 import re
+import time
 from pathlib import Path
 from typing import List, Dict, Any
 
@@ -202,3 +203,5 @@ if __name__ == '__main__':
         main()
     except Exception as e:
         print(e)
+
+    time.sleep(5)
